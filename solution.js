@@ -10,10 +10,9 @@ const getHtmlContent = async (url) => {
 	return response.data;
 };
 
-function createChildProcess(command, cb) {
+function createChildProcess(command) {
 	const [arg, ...options] = command.split(' ');
 	const childProcess = spawn(arg, options);
-
 	return childProcess;
 }
 
@@ -43,7 +42,8 @@ async function processVersion(task) {
 	let error = null;
 	let html = null;
 	let cli = [];
-	const childProcess = await compileTask(task);
+	const childProcess = compileTask(task);
+
 	childProcess.stdout.on('data', (data) => {
 		cli.push(data.toString());
 	});
@@ -68,7 +68,7 @@ async function processVersion(task) {
 			resolve(
 				createResultObj(id, html, error, cli, url, childProcess, task)
 			);
-		}, 1000);
+		}, 1500);
 	});
 }
 
