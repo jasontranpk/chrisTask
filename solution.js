@@ -72,16 +72,14 @@ async function processVersion(task) {
 	});
 }
 
-async function processVersions(tasks) {
+module.exports.processVersions = async function (tasks, path) {
 	const result = [];
 	for (let i = 0; i < tasks.versions.length; i++) {
 		const obj = await processVersion(tasks.versions[i]);
 		result.push(obj);
-		if (i === tasks.versions.length - 1) {
-			fse.writeJsonSync('./result_in_json.json', result);
-		}
+		fse.writeJsonSync(path, result);
 	}
 	console.log(result);
-}
+};
 
-processVersions(inputData);
+// processVersions(inputData);
