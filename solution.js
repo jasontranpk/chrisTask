@@ -74,7 +74,6 @@ async function processVersion(task) {
 
 module.exports.processVersions = async function (tasks) {
 	const result = {
-		error: null,
 		data: [],
 	};
 	for (let i = 0; i < tasks.versions.length; i++) {
@@ -82,8 +81,7 @@ module.exports.processVersions = async function (tasks) {
 			const obj = await processVersion(tasks.versions[i]);
 			result.data.push(obj);
 		} catch (err) {
-			result.error = 'Something wrong! Please try again later';
-			return result;
+			throw new Error('Something wrong, please try again later');
 		}
 	}
 	return result;
