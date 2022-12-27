@@ -72,14 +72,19 @@ async function processVersion(task) {
 	});
 }
 
-module.exports.processVersions = async function (tasks, path) {
-	const result = [];
+module.exports.processVersions = async function (tasks) {
+	const result = {
+		error: null,
+		data: [],
+	};
 	for (let i = 0; i < tasks.versions.length; i++) {
-		const obj = await processVersion(tasks.versions[i]);
-		result.push(obj);
-		fse.writeJsonSync(path, result);
+		try {
+			const obj = await processVersion(tasks.versions[i]);
+			result.data.push(obj);
+		} catch (err) {
+			result.error = 'Something wrong! Please try again later';
+			return result;
+		}
 	}
-	console.log(result);
+	return result;
 };
-
-// processVersions(inputData);
