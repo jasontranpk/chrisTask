@@ -24,7 +24,7 @@ function compileTask(task) {
 	return childProcess;
 }
 
-async function createResultObj(id, html, error, cli, url, child_process, task) {
+async function createResultObj(id, html, error, cli, url, childProcess, task) {
 	try {
 		html = await getHtmlContent(url);
 	} catch (err) {
@@ -33,7 +33,7 @@ async function createResultObj(id, html, error, cli, url, child_process, task) {
 	for (let file of task.files) {
 		fse.removeSync(file.path);
 	}
-	await child_process.kill();
+	await childProcess.kill();
 	return { id, html, error, cli };
 }
 

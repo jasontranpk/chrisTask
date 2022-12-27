@@ -1,4 +1,11 @@
 const { processVersions } = require('./solution');
 const { dummyTasks: inputData } = require('./dummy-input');
+const fse = require('fs-extra');
 
-processVersions(inputData, './result_in_json.json');
+const { data, error } = processVersions(inputData);
+
+if (!error) {
+	fse.writeJSONSync(data);
+} else {
+	console.log(error);
+}
