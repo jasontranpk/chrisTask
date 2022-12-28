@@ -6,7 +6,7 @@ const RESULT_PATH = './result_in_json.json';
 
 processVersions(inputData)
 	.then((result) => {
-		console.log(result);
+		// console.log(result);
 		fse.writeJSONSync(RESULT_PATH, result.data);
 	})
 	.catch((err) => console.log(err));

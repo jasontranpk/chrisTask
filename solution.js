@@ -42,13 +42,16 @@ async function processVersion(task) {
 	let error = null;
 	let html = null;
 	let cli = [];
+	const url = inputData.results[0].url;
 	const childProcess = compileTask(task);
 
 	childProcess.stdout.on('data', (data) => {
+		console.log(data);
 		cli.push(data.toString());
 	});
 
 	childProcess.stderr.on('data', (data) => {
+		console.log(data.toString());
 		cli.push(data.toString());
 	});
 
@@ -62,13 +65,12 @@ async function processVersion(task) {
 			console.log('Child exited okay');
 		}
 	});
-	const url = inputData.results[0].url;
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
 			resolve(
 				createResultObj(id, html, error, cli, url, childProcess, task)
 			);
-		}, 1500);
+		}, 3000);
 	});
 }
 
