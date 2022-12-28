@@ -67,6 +67,8 @@ async function processVersion(task) {
 				console.error('Child was killed with signal', signal);
 			} else {
 				console.log('Child exited okay');
+				await clearProcess(task, childProcess);
+				resolve(resultObject);
 			}
 		});
 	});
