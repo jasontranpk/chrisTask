@@ -4,9 +4,9 @@ const fse = require('fs-extra');
 
 const RESULT_PATH = './result_in_json.json';
 
-processVersions(inputData)
-	.then((result) => {
-		// console.log(result);
-		fse.writeJSONSync(RESULT_PATH, result.data);
-	})
-	.catch((err) => console.log(err));
+async function getLog(inputData, path) {
+	const { data } = await processVersions(inputData);
+	await fse.writeJSON(path, data);
+}
+
+getLog(inputData, RESULT_PATH);

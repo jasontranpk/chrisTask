@@ -47,7 +47,9 @@ async function processVersion(task) {
 			resultObject.cli.push(data.toString());
 			try {
 				htmlContent = await getHtmlContent(url);
-			} catch (error) {}
+			} catch (error) {
+				// console.log('html is not yet to be rendered');
+			}
 			if (htmlContent) {
 				resultObject.html = htmlContent;
 				await clearProcess(task, childProcess);
