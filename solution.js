@@ -24,73 +24,43 @@ function compileTask(task) {
 	return childProcess;
 }
 
-async function createResultObj(id, html, error, cli, url, childProcess, task) {
-	if (!html) {
-		try {
-			html = await getHtmlContent(url);
-		} catch (err) {
-			html = null;
-		}
-	}
-
+async function clearProcess(task, childProcess) {
 	for (let file of task.files) {
 		fse.removeSync(file.path);
 	}
 	await childProcess.kill();
-	return { id, html, error, cli };
 }
 
 async function processVersion(task) {
 	return new Promise((resolve, reject) => {
-		const id = task.id;
-		let error = null;
-		let html = null;
-		let cli = [];
+		const resultObject = {
+			id: task.id,
+			error: null,
+			html: null,
+			cli: [],
+		};
 		const url = inputData.results[0].url;
 		const childProcess = compileTask(task);
 
-		childProcess.stdout.on('data', (data) => {
-			console.log(data);
-			cli.push(data.toString());
-		});
-
 		childProcess.stderr.on('data', async (data) => {
 			let htmlContent = null;
-			console.log(data.toString());
-			cli.push(data.toString());
+			resultObject.cli.push(data.toString());
 			try {
 				htmlContent = await getHtmlContent(url);
-			} catch (error) {
-				// console.log('cant get html content yet');
-			}
+			} catch (error) {}
 			if (htmlContent) {
-				const result = await createResultObj(
-					id,
-					htmlContent,
-					error,
-					cli,
-					url,
-					childProcess,
-					task
-				);
-				resolve(result);
+				resultObject.html = htmlContent;
+				await clearProcess(task, childProcess);
+				resolve(resultObject);
 			}
 		});
 
 		childProcess.on('exit', async (code) => {
 			if (code) {
 				console.error('Child was killed with error code: ', code);
-				error = code;
-				const result = await createResultObj(
-					id,
-					html,
-					error,
-					cli,
-					url,
-					childProcess,
-					task
-				);
-				resolve(result);
+				resultObject.error = code;
+				await clearProcess(task, childProcess);
+				resolve(resultObject);
 			} else if (signal) {
 				console.error('Child was killed with signal', signal);
 			} else {
