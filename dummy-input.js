@@ -1,16 +1,11 @@
 module.exports.dummyTasks = {
 	versions: [
 		{
-			id: 'correct-version',
+			id: 'incorrect-version2',
 			files: [
 				{
 					path: 'src/main.rs',
 					content: `
-                    use std::{
-                        io::{prelude::*, BufReader},
-                        net::{TcpListener, TcpStream},
-                    };
-                    
                     fn main() {
                         let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
                     

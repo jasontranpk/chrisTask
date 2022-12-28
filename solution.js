@@ -63,17 +63,16 @@ async function processVersion(task, cb) {
 			// console.log('cant get html content yet');
 		}
 		if (htmlContent) {
-			cb(
-				await createResultObj(
-					id,
-					htmlContent,
-					error,
-					cli,
-					url,
-					childProcess,
-					task
-				)
+			const result = await createResultObj(
+				id,
+				htmlContent,
+				error,
+				cli,
+				url,
+				childProcess,
+				task
 			);
+			cb(result);
 		}
 	});
 
@@ -81,45 +80,33 @@ async function processVersion(task, cb) {
 		if (code) {
 			console.error('Child was killed with error code: ', code);
 			error = code;
-			cb(
-				await createResultObj(
-					id,
-					html,
-					error,
-					cli,
-					url,
-					childProcess,
-					task
-				)
+			const result = await createResultObj(
+				id,
+				html,
+				error,
+				cli,
+				url,
+				childProcess,
+				task
 			);
+			cb(result);
 		} else if (signal) {
 			console.error('Child was killed with signal', signal);
 		} else {
 			console.log('Child exited okay');
 		}
 	});
-	/* 	return new Promise((resolve, reject) => {
-		setTimeout(() => {
-			resolve(
-				createResultObj(id, html, error, cli, url, childProcess, task)
-			);
-		}, 3000);
-	}); */
 }
 
-module.exports.processVersions = async function (tasks) {
+module.exports.processVersions = async function (tasks, cb) {
 	const result = {
 		data: [],
 	};
 	for (let i = 0; i < tasks.versions.length; i++) {
-		try {
-			const obj = await processVersion(tasks.versions[i], (resultObj) => {
-				console.log(resultObj);
-			});
-			result.data.push(obj);
-		} catch (err) {
-			throw new Error('Something wrong, please try again later');
-		}
+		const obj = await processVersion(tasks.versions[i], (resultObj) => {
+			console.log(resultObj);
+			result.data.push(resultObj);
+		});
 	}
 	return result;
 };
