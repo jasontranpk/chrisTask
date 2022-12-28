@@ -40,73 +40,74 @@ async function createResultObj(id, html, error, cli, url, childProcess, task) {
 	return { id, html, error, cli };
 }
 
-async function processVersion(task, cb) {
-	const id = task.id;
-	let error = null;
-	let html = null;
-	let cli = [];
-	const url = inputData.results[0].url;
-	const childProcess = compileTask(task);
+async function processVersion(task) {
+	return new Promise((resolve, reject) => {
+		const id = task.id;
+		let error = null;
+		let html = null;
+		let cli = [];
+		const url = inputData.results[0].url;
+		const childProcess = compileTask(task);
 
-	childProcess.stdout.on('data', (data) => {
-		console.log(data);
-		cli.push(data.toString());
-	});
+		childProcess.stdout.on('data', (data) => {
+			console.log(data);
+			cli.push(data.toString());
+		});
 
-	childProcess.stderr.on('data', async (data) => {
-		let htmlContent = null;
-		console.log(data.toString());
-		cli.push(data.toString());
-		try {
-			htmlContent = await getHtmlContent(url);
-		} catch (error) {
-			// console.log('cant get html content yet');
-		}
-		if (htmlContent) {
-			const result = await createResultObj(
-				id,
-				htmlContent,
-				error,
-				cli,
-				url,
-				childProcess,
-				task
-			);
-			cb(result);
-		}
-	});
+		childProcess.stderr.on('data', async (data) => {
+			let htmlContent = null;
+			console.log(data.toString());
+			cli.push(data.toString());
+			try {
+				htmlContent = await getHtmlContent(url);
+			} catch (error) {
+				// console.log('cant get html content yet');
+			}
+			if (htmlContent) {
+				const result = await createResultObj(
+					id,
+					htmlContent,
+					error,
+					cli,
+					url,
+					childProcess,
+					task
+				);
+				resolve(result);
+			}
+		});
 
-	childProcess.on('exit', async (code) => {
-		if (code) {
-			console.error('Child was killed with error code: ', code);
-			error = code;
-			const result = await createResultObj(
-				id,
-				html,
-				error,
-				cli,
-				url,
-				childProcess,
-				task
-			);
-			cb(result);
-		} else if (signal) {
-			console.error('Child was killed with signal', signal);
-		} else {
-			console.log('Child exited okay');
-		}
+		childProcess.on('exit', async (code) => {
+			if (code) {
+				console.error('Child was killed with error code: ', code);
+				error = code;
+				const result = await createResultObj(
+					id,
+					html,
+					error,
+					cli,
+					url,
+					childProcess,
+					task
+				);
+				resolve(result);
+			} else if (signal) {
+				console.error('Child was killed with signal', signal);
+			} else {
+				console.log('Child exited okay');
+			}
+		});
 	});
 }
 
-module.exports.processVersions = async function (tasks, cb) {
+module.exports.processVersions = async function (tasks) {
 	const result = {
 		data: [],
 	};
 	for (let i = 0; i < tasks.versions.length; i++) {
-		const obj = await processVersion(tasks.versions[i], (resultObj) => {
-			console.log(resultObj);
-			result.data.push(resultObj);
-		});
+		const obj = await processVersion(tasks.versions[i]);
+		result.data.push(obj);
 	}
+	console.log(result);
 	return result;
 };
