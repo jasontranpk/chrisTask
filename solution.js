@@ -25,11 +25,14 @@ function compileTask(task) {
 }
 
 async function createResultObj(id, html, error, cli, url, childProcess, task) {
-	try {
-		html = await getHtmlContent(url);
-	} catch (err) {
-		html = null;
+	if (!html) {
+		try {
+			html = await getHtmlContent(url);
+		} catch (err) {
+			html = null;
+		}
 	}
+
 	for (let file of task.files) {
 		fse.removeSync(file.path);
 	}
@@ -37,7 +40,7 @@ async function createResultObj(id, html, error, cli, url, childProcess, task) {
 	return { id, html, error, cli };
 }
 
-async function processVersion(task) {
+async function processVersion(task, cb) {
 	const id = task.id;
 	let error = null;
 	let html = null;
@@ -50,28 +53,58 @@ async function processVersion(task) {
 		cli.push(data.toString());
 	});
 
-	childProcess.stderr.on('data', (data) => {
+	childProcess.stderr.on('data', async (data) => {
+		let htmlContent = null;
 		console.log(data.toString());
 		cli.push(data.toString());
+		try {
+			htmlContent = await getHtmlContent(url);
+		} catch (error) {
+			// console.log('cant get html content yet');
+		}
+		if (htmlContent) {
+			cb(
+				await createResultObj(
+					id,
+					htmlContent,
+					error,
+					cli,
+					url,
+					childProcess,
+					task
+				)
+			);
+		}
 	});
 
-	childProcess.on('exit', (code) => {
+	childProcess.on('exit', async (code) => {
 		if (code) {
 			console.error('Child was killed with error code: ', code);
 			error = code;
+			cb(
+				await createResultObj(
+					id,
+					html,
+					error,
+					cli,
+					url,
+					childProcess,
+					task
+				)
+			);
 		} else if (signal) {
 			console.error('Child was killed with signal', signal);
 		} else {
 			console.log('Child exited okay');
 		}
 	});
-	return new Promise((resolve, reject) => {
+	/* 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
 			resolve(
 				createResultObj(id, html, error, cli, url, childProcess, task)
 			);
 		}, 3000);
-	});
+	}); */
 }
 
 module.exports.processVersions = async function (tasks) {
@@ -80,7 +113,9 @@ module.exports.processVersions = async function (tasks) {
 	};
 	for (let i = 0; i < tasks.versions.length; i++) {
 		try {
-			const obj = await processVersion(tasks.versions[i]);
+			const obj = await processVersion(tasks.versions[i], (resultObj) => {
+				console.log(resultObj);
+			});
 			result.data.push(obj);
 		} catch (err) {
 			throw new Error('Something wrong, please try again later');
