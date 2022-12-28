@@ -3,7 +3,6 @@ const { spawn } = require('child_process');
 const fse = require('fs-extra');
 const controller = new AbortController();
 const { signal } = controller;
-const { dummyTasks: inputData } = require('./dummy-input');
 
 const getHtmlContent = async (url) => {
 	let response = await axios({ url: url, insecureHTTPParser: true });
@@ -16,11 +15,11 @@ function createChildProcess(command) {
 	return childProcess;
 }
 
-function compileTask(task) {
+function compileTask(task, command) {
 	for (let file of task.files) {
 		fse.outputFileSync(file.path, file.content);
 	}
-	const childProcess = createChildProcess(inputData.command);
+	const childProcess = createChildProcess(command);
 	return childProcess;
 }
 
@@ -31,7 +30,7 @@ async function clearProcess(task, childProcess) {
 	await childProcess.kill();
 }
 
-async function processVersion(task) {
+async function processVersion(task, url, command) {
 	return new Promise((resolve, reject) => {
 		const resultObject = {
 			id: task.id,
@@ -39,8 +38,8 @@ async function processVersion(task) {
 			html: null,
 			cli: [],
 		};
-		const url = inputData.results[0].url;
-		const childProcess = compileTask(task);
+
+		const childProcess = compileTask(task, command);
 
 		childProcess.stderr.on('data', async (data) => {
 			let htmlContent = null;
@@ -75,13 +74,15 @@ async function processVersion(task) {
 }
 
 module.exports.processVersions = async function (tasks) {
-	const result = {
+	const command = tasks.command;
+	const url = tasks.results[0].url;
+	const results = {
 		data: [],
 	};
 	for (let i = 0; i < tasks.versions.length; i++) {
-		const obj = await processVersion(tasks.versions[i]);
-		result.data.push(obj);
+		const obj = await processVersion(tasks.versions[i], url, command);
+		results.data.push(obj);
 	}
-	console.log(result);
-	return result;
+	console.log(results);
+	return results;
 };
